@@ -53,9 +53,12 @@ const validationGroups = [
   { name: "自由 VS 责任", questions: ["Q4", "Q21", "Q24", "Q29", "Q30"] },
   { name: "认可 VS 自我实现", questions: ["Q22", "Q25", "Q27", "Q30"] }
 ];
-
 function send(res, status, body, type = "application/json; charset=utf-8") {
   res.writeHead(status, { "Content-Type": type, "Cache-Control": "no-store" });
+  if (Buffer.isBuffer(body)) {
+    res.end(body);
+    return;
+  }
   res.end(typeof body === "string" ? body : JSON.stringify(body));
 }
 

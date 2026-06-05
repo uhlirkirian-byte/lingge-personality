@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>灵格人格结构采样</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="intro">
+        <div>
+          <p class="eyebrow">LingGe MVP</p>
+          <h1>灵格 40 题人格结构采样</h1>
+          <p class="lead">用行为选择观察关系模式、价值驱动、防御机制和内部互搏。答完即可获得初版报告，并可继续深入对话。</p>
+        </div>
+        <div class="status-panel">
+          <span id="progressText">0 / 40</span>
+          <div class="progress"><div id="progressBar"></div></div>
+        </div>
+      </section>
+
+      <section class="profile">
+        <label>
+          年龄段
+          <select id="ageRange">
+            <option value="">可选</option>
+            <option>18-24</option>
+            <option>25-34</option>
+            <option>35-45</option>
+            <option>46+</option>
+          </select>
+        </label>
+        <label>
+          当前最想理解的问题
+          <input id="currentIssue" maxlength="80" placeholder="例如：关系、工作选择、内耗、拖延">
+        </label>
+      </section>
+
+      <form id="quizForm" class="quiz"></form>
+
+      <section class="actions">
+        <button id="submitBtn" type="button">生成初版报告</button>
+        <p id="formMessage"></p>
+      </section>
+
+      <section id="reportPanel" class="report hidden">
+        <p class="eyebrow">即时反馈报告</p>
+        <h2 id="reportTitle"></h2>
+        <pre id="reportText"></pre>
+        <div class="chips" id="signalChips"></div>
+        <div class="chat">
+          <h3>继续深入</h3>
+          <p id="nextQuestion"></p>
+          <textarea id="chatInput" rows="4" placeholder="可以回答上面的问题，或写下哪一段最像你、哪一段不像你。"></textarea>
+          <button id="chatBtn" type="button">保存并继续分析</button>
+          <p id="chatReply"></p>
+        </div>
+      </section>
+    </main>
+    <script src="/questions.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

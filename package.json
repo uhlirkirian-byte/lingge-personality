@@ -1,0 +1,16 @@
+{
+  "name": "lingge-personality-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LingGe 40-question personality structure sampling MVP.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.16.0"
+  }
+}

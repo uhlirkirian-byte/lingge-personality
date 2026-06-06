@@ -232,55 +232,72 @@ function buildReport(title, signals, groups, answers) {
     .slice(0, 3)
     .map(g => `${g.name}(${g.dominantOption}/${g.strength})`)
     .join("、") || "暂未形成特别集中的模式";
-  const relation = relationPattern(answers);
+  const cognition = cognitionPattern(answers, signals);
   const value = valuePattern(answers);
-  const pressure = pressurePattern(answers);
-  const conflict = conflictPattern(groupNames, signals, answers);
-  const risk = riskPattern(answers, signals, groupNames);
+  const action = actionPattern(answers, signals);
+  const defense = defensePattern(answers, signals);
+  const energy = energyPattern(answers, signals, groupNames);
+  const relation = relationPattern(answers);
   const suggestion = suggestionPattern(answers, signals);
 
   return [
     title,
     "",
     "【一句话画像】",
-    `你不是一个简单的“外向/内向”类型，更像是一个会先判断关系安全、责任边界和自我价值是否稳住的人。当前最集中的线索是：${dominantGroups}。`,
+    `你更像是一个“先校准内在秩序，再决定怎么行动”的人。你不是单纯外向或内向，而是会先判断：这件事是否安全、是否值得、是否符合自己的标准。当前最集中的线索是：${dominantGroups}。`,
     "",
-    "【关系模式】",
-    relation,
+    "【底层操作系统】",
+    cognition,
     "",
-    "【价值驱动】",
+    "【价值排序】",
     value,
     "",
-    "【压力与防御】",
-    pressure,
+    "【行动驱动】",
+    action,
     "",
-    "【内部拉扯】",
-    conflict,
+    "【防御机制】",
+    defense,
     "",
-    "【容易卡住的地方】",
-    risk,
+    "【能量漏洞】",
+    energy,
+    "",
+    "【关系只是其中一个触发器】",
+    relation,
     "",
     "【下一步建议】",
     suggestion,
     "",
-    "这不是最终人格定论，而是一份基于 40 道选择题生成的初版结构画像。真正有价值的部分，是拿它去对照你最近的一段关系、一个选择或一次压力反应，看哪些句子准确，哪些句子需要被修正。"
+    "这不是最终人格定论，而是一份基于 40 道选择题生成的底层结构画像。它真正想回答的不是“你适合谁”，而是：你如何判断安全，如何确认价值，如何启动行动，又如何在压力下保护自己。"
   ].join("\n");
+}
+
+function cognitionPattern(answers, signals) {
+  if (signals.includes("反复思考") || answers.Q32 === "B") {
+    return "你的信息处理方式偏“内在演算型”：遇到不确定时，你会先在脑子里跑很多可能性，试图提前看见风险、后果和对方反应。优点是判断细、预判强；代价是启动会变慢，甚至还没行动就已经消耗了一轮。";
+  }
+  if (answers.Q31 === "A") {
+    return "你的信息处理方式偏“压力驱动型”：越到关键时刻，越容易调动行动力。你不一定喜欢压力，但压力会让你的系统进入清晰、紧绷、可执行的状态。";
+  }
+  if (answers.Q4 === "A" || answers.Q23 === "A") {
+    return "你的信息处理方式偏“秩序优先型”：面对变化时，你会先寻找可控点，先安排、先规划、先把不确定变成步骤。你需要的不是绝对安全，而是知道自己接下来能抓住什么。";
+  }
+  return "你的信息处理方式偏“情境校准型”：你不会只凭冲动决定，而是会先观察环境、关系、风险和自己的状态，再决定投入多少。";
 }
 
 function relationPattern(answers) {
   const fearMap = {
-    A: "你在亲密关系里最怕的是被忽视。比起直接冲突，你更容易被“对方没有回应、热度下降、没有把你放在心上”这类细节触发。",
-    B: "你在亲密关系里最怕的是被控制。你需要亲近，但也需要保留自己的节奏和选择权。",
-    C: "你在亲密关系里最怕的是被背叛。你对关系里的排他性、承诺和可靠性会比较敏感。",
-    D: "你在亲密关系里最怕的是不被理解。你不是只要陪伴，而是希望对方真的懂你的感受和内在逻辑。"
+    A: "在关系里，你容易被“是否被放在心上”触发。",
+    B: "在关系里，你对自主权和边界很敏感。",
+    C: "在关系里，你会重视承诺、可靠性和一致性。",
+    D: "在关系里，你真正需要的是被理解，而不只是被陪伴。"
   };
   const responseMap = {
-    A: "你更倾向主动确认和修复，问题出现时会想尽快说清楚。",
-    B: "你更倾向先观察，不急着摊牌，但心里会持续评估对方的变化。",
-    C: "你容易在心里反复消化，表面未必说很多，但情绪会留得比较久。",
-    D: "你会用距离保护自己，尤其在多次失望后，抽离会比争辩更自然。"
+    A: "你的第一反应通常是确认和修复。",
+    B: "你的第一反应通常是观察和评估。",
+    C: "你的第一反应通常是先压住、慢慢消化。",
+    D: "你的第一反应通常是拉开距离，先保住自己。"
   };
-  return `${fearMap[answers.Q20] || fearMap.D}${responseMap[answers.Q11] || responseMap.B}`;
+  return `${fearMap[answers.Q20] || fearMap.D}${responseMap[answers.Q11] || responseMap.B}这里不是报告的中心，只是一个高频触发场景：关系会把你的安全感、价值感和防御方式更快地照出来。`;
 }
 
 function valuePattern(answers) {
@@ -296,65 +313,62 @@ function valuePattern(answers) {
     C: "你希望别人觉得你有意思、有特点，不只是普通地完成任务。",
     D: "你希望别人觉得你活得明白，有自己的判断。"
   };
-  return `${driveMap[answers.Q27] || driveMap.C}${identityMap[answers.Q30] || ""}`;
+  return `${driveMap[answers.Q27] || driveMap.C}${identityMap[answers.Q30] || ""}所以你的价值排序不是单纯“成功/轻松/被喜欢”，而是更关心：我有没有活成自己认可的样子。`;
 }
 
-function pressurePattern(answers) {
-  const stressMap = {
-    A: "压力越大，你越可能进入战斗模式，用行动把自己撑住。",
-    B: "压力积累时，你更容易烦躁，对人和事的耐心下降。",
-    C: "压力积累时，你外面可能还正常，但里面会越来越紧，像一直有东西没有放下。",
-    D: "压力积累时，你容易拖住、回避，甚至暂时不想面对。"
+function actionPattern(answers, signals) {
+  const driveMap = {
+    A: "你启动行动时，常常需要一个“不能再被动”的临界点。一旦你感觉自己不能再这样下去，行动力会明显上来。",
+    B: "你启动行动时，常常需要一个“有人看见/有人期待”的外部确认。你不是没主见，而是反馈会帮你把能量调起来。",
+    C: "你启动行动时，常常需要一个“我要证明”的目标。清晰的结果、能力感和胜负感会提高你的执行力。",
+    D: "你启动行动时，常常需要一个“这是我真正想要的”的内在理由。没有意义感的任务，你很难长期靠自律硬撑。"
   };
+  if (signals.includes("反复思考")) {
+    return `${driveMap[answers.Q27] || driveMap.C}但你的行动系统有一个特点：想得越多，越需要一个很小的启动动作把系统从脑内切到现实。`;
+  }
+  return driveMap[answers.Q27] || driveMap.C;
+}
+
+function defensePattern(answers, signals) {
+  if (answers.Q33 === "A") {
+    return "你的防御机制不是完全封闭型。情绪上来时，你有把话说出来、把问题推到台面上的倾向。这个能力很好，但需要注意：表达是为了澄清真实需求，不只是为了立刻得到安抚。";
+  }
+  if (answers.Q33 === "B" || signals.includes("压抑感受")) {
+    return "你的防御机制偏“内部消化型”：先不打扰别人，先自己处理。它能让你显得稳定，但也容易让别人低估你的压力。";
+  }
+  if (answers.Q33 === "D" || signals.includes("抽离防御")) {
+    return "你的防御机制偏“抽离型”：当系统判断继续投入会受伤或失控时，你会先撤回能量。它能保护你，但也可能让你错过一些可以修正关系和局面的机会。";
+  }
+  return "你的防御机制偏“转移型”：难受时会先做点别的，让自己不要被情绪吞没。它有用，但真正的问题仍需要在情绪退潮后被处理。";
+}
+
+function energyPattern(answers, signals, groupNames) {
   const energyMap = {
     A: "你的能量常耗在“还没开始就想太多”。",
     B: "你的能量常耗在“太在意别人的状态和反应”。",
     C: "你的能量常耗在“知道该做，但启动困难”。",
     D: "你的能量常耗在“明知不值得，却还继续投入”。"
   };
-  return `${stressMap[answers.Q31] || stressMap.C}${energyMap[answers.Q37] || ""}`;
-}
-
-function conflictPattern(groupNames, signals, answers) {
+  if (answers.Q31 === "C") {
+    return `你的压力不一定会立刻爆出来，而是容易在内部越压越紧。${energyMap[answers.Q37] || ""}这说明真正消耗你的，往往不是事情本身，而是事情背后那套持续运行的解释和担心。`;
+  }
   if (groupNames.includes("自由 VS 责任")) {
-    return "你身上有一个很明显的拉扯：一边想自由、不想被困住；另一边又不希望自己变成逃避责任的人。所以你真正难受的不是“要不要负责”，而是“我能不能在负责的同时不丢掉自己”。";
+    return `${energyMap[answers.Q37] || ""}你还有一个明显消耗点：想自由，又不想变成不负责的人。真正需要调的不是责任感，而是边界。`;
   }
-  if (groupNames.includes("表达 VS 压抑")) {
-    return "你可能不是不会表达，而是在判断表达有没有用、会不会造成更大的麻烦。很多情绪不是没有，而是被你先收起来了。";
-  }
-  if (groupNames.includes("靠近 VS 防御")) {
-    return "你既需要关系，也会防御关系带来的不确定。越重要的人，越可能同时触发你的靠近和退后。";
-  }
-  if (signals.includes("反复思考")) {
-    return "你会先在脑子里处理很多可能性，等自己觉得足够安全或足够确定，才比较容易行动。";
-  }
-  return "你目前的主要拉扯，不是能力不足，而是几个真实需求同时存在：想稳定、想被看见、想保留自由，也想证明自己。";
-}
-
-function riskPattern(answers, signals, groupNames) {
-  if (answers.Q38 === "C" || answers.Q40 === "C") {
-    return "最大的风险是把一次失败解释成“我这个人不够重要/不够好”。如果这个解释反复出现，你会越来越难启动，而不是越来越清醒。";
-  }
-  if (signals.includes("压抑感受") || answers.Q33 === "D") {
-    return "最大的风险是太会维持表面正常。别人看不出来，你也会误以为自己已经处理好了，但情绪其实只是被延后了。";
-  }
-  if (groupNames.includes("责任与边界")) {
-    return "最大的风险是把“可靠”做成一种长期消耗。你可能会先承担、先配合、先把事情稳住，但后面才发现自己已经不舒服很久了。";
-  }
-  return "最大的风险是把复杂感受压缩成一个简单判断：要么继续撑，要么直接撤。中间那段“说清楚、调边界、重新选择”的空间需要被练出来。";
+  return `${energyMap[answers.Q37] || ""}这部分是后续最值得追问的，因为一个人的能量花在哪里，通常比他嘴上说重视什么更能暴露底层逻辑。`;
 }
 
 function suggestionPattern(answers, signals) {
   if (answers.Q20 === "A" || answers.Q8 === "B" || answers.Q8 === "C") {
-    return "接下来最值得练的是：当你感觉被忽视时，先把事实和解释分开。事实是“对方没有回”；解释可能是“我不重要”。报告真正要追问的是：你通常在哪一步开始把事实变成解释？";
+    return "接下来最值得追问的是：当外界没有给你回应时，你的大脑会自动补出什么解释？这个解释比事件本身更能说明你的底层安全感。";
   }
   if (signals.includes("反复思考")) {
-    return "接下来最值得练的是：给思考设一个出口。比如只允许自己列三个可能性，然后做一个最小行动，而不是等完全想清楚才开始。";
+    return "接下来最值得练的是给思考设一个出口：不是要求自己别想，而是每次想完都落到一个最小动作上。人格结构不是靠想明白改变的，而是靠新的行动证据慢慢重写。";
   }
   if (answers.Q33 === "A") {
-    return "接下来最值得保留的是你的表达能力，但表达前可以先确认一句：我现在是想解决问题，还是只是想让对方立刻安抚我？这会让沟通更有效。";
+    return "接下来最值得保留的是表达能力，同时把表达从“情绪出口”升级成“需求识别”：我到底需要确认、尊重、自由、结果，还是理解？";
   }
-  return "接下来最值得做的是拿一件最近的真实小事来复盘：当时你最先感到什么，随后做了什么，最后真正想保护的是什么。";
+  return "接下来最值得做的是拿一件最近的真实小事复盘：当时你最先判断了什么，随后保护了什么，最后又牺牲了什么。这个顺序就是你的底层人格逻辑。";
 }
 
 function nextPrompt(analysis) {

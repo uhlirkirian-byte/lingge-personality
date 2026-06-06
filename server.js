@@ -24,8 +24,8 @@ const MIME = {
 };
 
 const optionSignals = {
-  A: ["安全感", "责任感", "主动修复", "证明自己"],
-  B: ["认可需求", "观察等待", "压抑", "稳定需求"],
+  A: ["主动表达", "责任感", "修复关系", "安全感"],
+  B: ["观察等待", "稳定需求", "压抑感受", "边界试探"],
   C: ["自我价值", "控制感", "反复思考", "成就驱动"],
   D: ["抽离防御", "自由需求", "独特性", "被理解需求"]
 };
@@ -41,9 +41,9 @@ const anchorQuestions = {
 };
 
 const validationGroups = [
-  { name: "安全感组", questions: ["Q8", "Q11", "Q18", "Q20"] },
-  { name: "自我价值组", questions: ["Q16", "Q22", "Q26", "Q27", "Q30"] },
-  { name: "责任感组", questions: ["Q9", "Q17", "Q22", "Q29", "Q30"] },
+  { name: "关系安全感", questions: ["Q8", "Q11", "Q18", "Q20"] },
+  { name: "自我价值", questions: ["Q16", "Q22", "Q26", "Q27", "Q30"] },
+  { name: "责任与边界", questions: ["Q9", "Q17", "Q22", "Q29", "Q30"] },
   { name: "控制感组", questions: ["Q4", "Q6", "Q23", "Q31"] },
   { name: "意义感组", questions: ["Q21", "Q24", "Q27", "Q28", "Q29"] },
   { name: "内耗组", questions: ["Q31", "Q37", "Q38", "Q40"] },
@@ -53,6 +53,7 @@ const validationGroups = [
   { name: "自由 VS 责任", questions: ["Q4", "Q21", "Q24", "Q29", "Q30"] },
   { name: "认可 VS 自我实现", questions: ["Q22", "Q25", "Q27", "Q30"] }
 ];
+
 function send(res, status, body, type = "application/json; charset=utf-8") {
   res.writeHead(status, { "Content-Type": type, "Cache-Control": "no-store" });
   if (Buffer.isBuffer(body)) {
@@ -216,48 +217,144 @@ function analyzeSubmission(answers) {
 }
 
 function buildTitle(topSignals, groups) {
-  if (groups.some(g => g.name === "靠近 VS 防御")) return "《想靠近，却总在关键处保护自己的人》";
-  if (groups.some(g => g.name === "成长 VS 安全")) return "《一边想往前走，一边需要确定感的人》";
-  if (topSignals.includes("反复思考")) return "《习惯先把可能性想完再行动的人》";
-  if (topSignals.includes("认可需求")) return "《一直在确认自己是否值得的人》";
-  if (topSignals.includes("自由需求")) return "《渴望自由，也害怕失去方向的人》";
-  return "《正在寻找自己运行逻辑的人》";
+  const names = groups.map(g => g.name);
+  if (names.includes("表达 VS 压抑") && topSignals.includes("压抑感受")) return "《外表稳住，心里其实一直在消化的人》";
+  if (names.includes("靠近 VS 防御") && topSignals.includes("抽离防御")) return "《很在意关系，但会用后退保护自己的人》";
+  if (names.includes("成长 VS 安全") && topSignals.includes("自我价值")) return "《想证明自己，也需要确定感托底的人》";
+  if (topSignals.includes("反复思考")) return "《先在心里演算很多遍，才真正行动的人》";
+  if (topSignals.includes("自由需求")) return "《不想被困住，也不想失去方向的人》";
+  return "《正在看清自己底层运行方式的人》";
 }
 
 function buildReport(title, signals, groups, answers) {
-  const mainSignal = signals[0] || "关系与价值判断";
-  const defense = pickDefense(signals, answers);
-  const conflict = groups.find(g => g.name.includes("VS"))?.name || "稳定自我 VS 外界反馈";
-  const loop = pickLoop(groups, signals);
+  const groupNames = groups.map(g => g.name);
+  const dominantGroups = groups
+    .slice(0, 3)
+    .map(g => `${g.name}(${g.dominantOption}/${g.strength})`)
+    .join("、") || "暂未形成特别集中的模式";
+  const relation = relationPattern(answers);
+  const value = valuePattern(answers);
+  const pressure = pressurePattern(answers);
+  const conflict = conflictPattern(groupNames, signals, answers);
+  const risk = riskPattern(answers, signals, groupNames);
+  const suggestion = suggestionPattern(answers, signals);
 
   return [
-    `${title}`,
+    title,
     "",
-    `你的答案里最明显的不是某个单一性格，而是围绕“${mainSignal}”形成的一组选择习惯。你在做决定时，不只是看事情本身，也会很快评估这件事会不会影响关系、价值感或未来的安全边界。`,
+    "【一句话画像】",
+    `你不是一个简单的“外向/内向”类型，更像是一个会先判断关系安全、责任边界和自我价值是否稳住的人。当前最集中的线索是：${dominantGroups}。`,
     "",
-    `真正值得注意的是防御方式。当前答案更像是“${defense}”：它能让你在压力里先稳住自己，但代价是问题可能不会立刻消失，而是被你放进更长的观察、解释或抽离过程里。`,
+    "【关系模式】",
+    relation,
     "",
-    `内部互搏初步指向“${conflict}”。这不是说你矛盾，而是你身上有两个都真实的需求：一个想推进、靠近或证明；另一个需要确认、保护或保留退路。很多卡点不是能力不足，而是这两个需求长期同时在线。`,
+    "【价值驱动】",
+    value,
     "",
-    `可能的长期循环是：${loop}。后续如果继续深入聊天，最有价值的不是重复判断你准不准，而是追问这个循环最早从哪里开始、在哪类关系或选择里最常复现。`,
+    "【压力与防御】",
+    pressure,
     "",
-    "本报告是 MVP 初版分析，只基于 40 题答案生成。更准确的数字人格档案需要结合追问、真实案例和用户反馈继续校正。"
+    "【内部拉扯】",
+    conflict,
+    "",
+    "【容易卡住的地方】",
+    risk,
+    "",
+    "【下一步建议】",
+    suggestion,
+    "",
+    "这不是最终人格定论，而是一份基于 40 道选择题生成的初版结构画像。真正有价值的部分，是拿它去对照你最近的一段关系、一个选择或一次压力反应，看哪些句子准确，哪些句子需要被修正。"
   ].join("\n");
 }
 
-function pickDefense(signals, answers) {
-  if (signals.includes("抽离防御")) return "先拉开距离，避免继续被消耗";
-  if (signals.includes("控制感")) return "不断确认和计划，让不确定性变得可控";
-  if (signals.includes("压抑")) return "表面维持正常，把情绪留到后面处理";
-  if (answers.Q33 === "A") return "通过表达和连接让情绪恢复流动";
-  return "先观察，再决定是否继续投入";
+function relationPattern(answers) {
+  const fearMap = {
+    A: "你在亲密关系里最怕的是被忽视。比起直接冲突，你更容易被“对方没有回应、热度下降、没有把你放在心上”这类细节触发。",
+    B: "你在亲密关系里最怕的是被控制。你需要亲近，但也需要保留自己的节奏和选择权。",
+    C: "你在亲密关系里最怕的是被背叛。你对关系里的排他性、承诺和可靠性会比较敏感。",
+    D: "你在亲密关系里最怕的是不被理解。你不是只要陪伴，而是希望对方真的懂你的感受和内在逻辑。"
+  };
+  const responseMap = {
+    A: "你更倾向主动确认和修复，问题出现时会想尽快说清楚。",
+    B: "你更倾向先观察，不急着摊牌，但心里会持续评估对方的变化。",
+    C: "你容易在心里反复消化，表面未必说很多，但情绪会留得比较久。",
+    D: "你会用距离保护自己，尤其在多次失望后，抽离会比争辩更自然。"
+  };
+  return `${fearMap[answers.Q20] || fearMap.D}${responseMap[answers.Q11] || responseMap.B}`;
 }
 
-function pickLoop(groups, signals) {
-  if (groups.some(g => g.name === "安全感组")) return "靠近重要关系，等待确认，感到不确定，再开始观察或退后";
-  if (groups.some(g => g.name === "内耗组")) return "想清楚再行动，行动前消耗过多，结果变慢，又进一步怀疑自己";
-  if (signals.includes("认可需求")) return "努力获得认可，短暂确认价值，然后又进入下一轮证明";
-  return "发现问题，尝试解释，获得暂时答案，但在下一次相似情境里重新被触发";
+function valuePattern(answers) {
+  const driveMap = {
+    A: "你的深层动力偏向“不想再被动”。你会被掌控人生、摆脱无力感、重新拿回主动权这类目标推动。",
+    B: "你的深层动力偏向“被重要的人看见”。认可对你不是虚荣，而是一种确认自己没有白努力的方式。",
+    C: "你的深层动力偏向“证明价值”。当你认真投入时，你很在意自己能不能做出结果、能不能被事实证明。",
+    D: "你的深层动力偏向“活得舒服和自由”。你不太能长期忍受只为了标准答案而生活。"
+  };
+  const identityMap = {
+    A: "你希望别人记住你的可靠和能托付。",
+    B: "你希望别人承认你的能力和本事。",
+    C: "你希望别人觉得你有意思、有特点，不只是普通地完成任务。",
+    D: "你希望别人觉得你活得明白，有自己的判断。"
+  };
+  return `${driveMap[answers.Q27] || driveMap.C}${identityMap[answers.Q30] || ""}`;
+}
+
+function pressurePattern(answers) {
+  const stressMap = {
+    A: "压力越大，你越可能进入战斗模式，用行动把自己撑住。",
+    B: "压力积累时，你更容易烦躁，对人和事的耐心下降。",
+    C: "压力积累时，你外面可能还正常，但里面会越来越紧，像一直有东西没有放下。",
+    D: "压力积累时，你容易拖住、回避，甚至暂时不想面对。"
+  };
+  const energyMap = {
+    A: "你的能量常耗在“还没开始就想太多”。",
+    B: "你的能量常耗在“太在意别人的状态和反应”。",
+    C: "你的能量常耗在“知道该做，但启动困难”。",
+    D: "你的能量常耗在“明知不值得，却还继续投入”。"
+  };
+  return `${stressMap[answers.Q31] || stressMap.C}${energyMap[answers.Q37] || ""}`;
+}
+
+function conflictPattern(groupNames, signals, answers) {
+  if (groupNames.includes("自由 VS 责任")) {
+    return "你身上有一个很明显的拉扯：一边想自由、不想被困住；另一边又不希望自己变成逃避责任的人。所以你真正难受的不是“要不要负责”，而是“我能不能在负责的同时不丢掉自己”。";
+  }
+  if (groupNames.includes("表达 VS 压抑")) {
+    return "你可能不是不会表达，而是在判断表达有没有用、会不会造成更大的麻烦。很多情绪不是没有，而是被你先收起来了。";
+  }
+  if (groupNames.includes("靠近 VS 防御")) {
+    return "你既需要关系，也会防御关系带来的不确定。越重要的人，越可能同时触发你的靠近和退后。";
+  }
+  if (signals.includes("反复思考")) {
+    return "你会先在脑子里处理很多可能性，等自己觉得足够安全或足够确定，才比较容易行动。";
+  }
+  return "你目前的主要拉扯，不是能力不足，而是几个真实需求同时存在：想稳定、想被看见、想保留自由，也想证明自己。";
+}
+
+function riskPattern(answers, signals, groupNames) {
+  if (answers.Q38 === "C" || answers.Q40 === "C") {
+    return "最大的风险是把一次失败解释成“我这个人不够重要/不够好”。如果这个解释反复出现，你会越来越难启动，而不是越来越清醒。";
+  }
+  if (signals.includes("压抑感受") || answers.Q33 === "D") {
+    return "最大的风险是太会维持表面正常。别人看不出来，你也会误以为自己已经处理好了，但情绪其实只是被延后了。";
+  }
+  if (groupNames.includes("责任与边界")) {
+    return "最大的风险是把“可靠”做成一种长期消耗。你可能会先承担、先配合、先把事情稳住，但后面才发现自己已经不舒服很久了。";
+  }
+  return "最大的风险是把复杂感受压缩成一个简单判断：要么继续撑，要么直接撤。中间那段“说清楚、调边界、重新选择”的空间需要被练出来。";
+}
+
+function suggestionPattern(answers, signals) {
+  if (answers.Q20 === "A" || answers.Q8 === "B" || answers.Q8 === "C") {
+    return "接下来最值得练的是：当你感觉被忽视时，先把事实和解释分开。事实是“对方没有回”；解释可能是“我不重要”。报告真正要追问的是：你通常在哪一步开始把事实变成解释？";
+  }
+  if (signals.includes("反复思考")) {
+    return "接下来最值得练的是：给思考设一个出口。比如只允许自己列三个可能性，然后做一个最小行动，而不是等完全想清楚才开始。";
+  }
+  if (answers.Q33 === "A") {
+    return "接下来最值得保留的是你的表达能力，但表达前可以先确认一句：我现在是想解决问题，还是只是想让对方立刻安抚我？这会让沟通更有效。";
+  }
+  return "接下来最值得做的是拿一件最近的真实小事来复盘：当时你最先感到什么，随后做了什么，最后真正想保护的是什么。";
 }
 
 function nextPrompt(analysis) {
@@ -268,7 +365,7 @@ function nextPrompt(analysis) {
   if (group === "成长 VS 安全") {
     return "我们可以继续看一个关键点：你犹豫时，更怕失败本身，还是更怕失败后证明自己不够好？";
   }
-  if (group === "内耗组") {
+  if (group === "内耗") {
     return "继续聊的话，我会先问：你最常是在开始前消耗，还是在已经投入之后反复怀疑值不值得？";
   }
   return "如果继续深入，我想先问：这份报告里哪一句最像你，哪一句你觉得不太像？";
